@@ -55,6 +55,7 @@ DMA_HandleTypeDef hdma_adc1;
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 
+TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim4;
 
 UART_HandleTypeDef huart5;
@@ -82,6 +83,10 @@ float yhszum=0;
 float hszum=0;
 uint32_t tav=0;
 uint32_t regitav=0;
+
+uint8_t counter=0;
+uint8_t szinkr=0;
+uint8_t kuldcpl;
 
 
 uint32_t channelLUT[16][2] = {
@@ -165,6 +170,7 @@ static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_UART5_Init(void);
 static void MX_TIM4_Init(void);
+static void MX_TIM2_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -236,7 +242,10 @@ int main(void)
   MX_SPI2_Init();
   MX_UART5_Init();
   MX_TIM4_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_Base_Start_IT(&htim2);
 
 //ALAPHELYZETBE ŃLLÕTŃS
   //VISSZAJELZ’ LED
@@ -251,15 +260,20 @@ HAL_Delay(10);
  while(1)
  {
 
-	ADC_ChannelConfTypeDef sConfig;
-	for(i=0; i<8; i++)
+	if (szinkr)
 	{
-		setLEDs(i);
-		for(j = 0; j < 2; j++)
+		ADC_ChannelConfTypeDef sConfig;
+		for(i=0; i<8; i++)
 		{
-			setMux(i*2+j);
-			measureADC(i*2+j);
+			setLEDs(i);
+			for(j = 0; j < 2; j++)
+			{
+				setMux(i*2+j);
+				measureADC(i*2+j);
+			}
 		}
+
+		szinkr=0;
 	}
 
 	//void BvjLED(adcMeasures);
@@ -277,7 +291,7 @@ HAL_Delay(10);
 
 	//teszt.word=0b00000000000000000000000000000000;
 
-	//AdatkŁldťs
+	//Adatk�?ldťs
 	HAL_SPI_Transmit(&hspi2, vjLED.rawdata, 4, HAL_MAX_DELAY);
 	//LE (PB12 33-NSS) fel le
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
@@ -291,9 +305,13 @@ HAL_Delay(10);
 //Kuldendo adatcsomag letrehozasa
 	snprintf(TxData, 16, "%d,%d\n", count, tav); //"2,150000'\0'"
 
-//KULDES
 
-	HAL_UART_Transmit_IT(&huart5, (uint8_t *)TxData, strlen(TxData)); //melyik, mit, mennyi, mennyi ido
+//KULDES
+	if (szinkr && kuldcpl)
+	{
+		kuldcpl=0;
+		HAL_UART_Transmit_IT(&huart5, (uint8_t *)TxData, strlen(TxData)); //melyik, mit, mennyi, mennyi ido
+	}
 
  }
 
@@ -507,6 +525,38 @@ static void MX_SPI2_Init(void)
 
 }
 
+/* TIM2 init function */
+static void MX_TIM2_Init(void)
+{
+
+  TIM_ClockConfigTypeDef sClockSourceConfig;
+  TIM_MasterConfigTypeDef sMasterConfig;
+
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 90;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 1000;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
 /* TIM4 init function */
 static void MX_TIM4_Init(void)
 {
@@ -544,7 +594,7 @@ static void MX_UART5_Init(void)
 {
 
   huart5.Instance = UART5;
-  huart5.Init.BaudRate = 9600;
+  huart5.Init.BaudRate = 115200;
   huart5.Init.WordLength = UART_WORDLENGTH_8B;
   huart5.Init.StopBits = UART_STOPBITS_1;
   huart5.Init.Parity = UART_PARITY_NONE;
@@ -614,6 +664,38 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(htim);
+  /* NOTE : This function Should not be modified, when the callback is needed,
+            the __HAL_TIM_PeriodElapsedCallback could be implemented in the user file
+   */
+  if(htim->Instance == TIM2)
+  {
+	  counter++;
+
+	  //adc mérés
+	  if(counter==10)
+	  {
+		  szinkr=1;
+		  mehet=1;
+		  counter=0;
+	  }
+
+
+  }
+}
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(huart);
+  /* NOTE: This function Should not be modified, when the callback is needed,
+           the HAL_UART_TxCpltCallback could be implemented in the user file
+   */
+  kuldcpl=1;
+}
+
 void setLEDs(uint8_t index)
 {
 	uint16_t data = iLEDLUT[index];
@@ -680,7 +762,7 @@ void BvjLED(uint16_t* measures) //Binaris visszajelzes:
 
 		//teszt.word=0b00000000000000000000000000000000;
 
-		//AdatkŁldťs
+		//Adatk�?ldťs
 		HAL_SPI_Transmit(&hspi2, vjLED.rawdata, 4, HAL_MAX_DELAY);
 		//LE (PB12 33-NSS) fel le
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
