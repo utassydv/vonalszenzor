@@ -311,7 +311,7 @@ HAL_Delay(10);
 
 
 //Kuldendo adatcsomag letrehozasa
-	snprintf(TxData, 16, "%u,%lu\n", count, tav); //"2,150000'\0'"
+	snprintf(TxData, 16, "%u,%lu?", count, tav); //"2,150000'\0'"
 
 
 //KULDES

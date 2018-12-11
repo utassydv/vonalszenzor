@@ -38,7 +38,7 @@ void displayLinePos(uint32_t tav)
 			}
 		}*/
 
-	ledpos = 31-(uint32_t)(tav / (dist*100.0f));
+	ledpos = 30-(uint32_t)(tav / (dist*100.0f));
 
 	vjLED.word = 3 << ledpos;
 
