@@ -774,34 +774,39 @@ uint16_t vonalszam_calc (uint16_t* ertekek)
 {
 	uint8_t countfel=0;
 	uint8_t countle=0;
+	uint16_t meresek[32];
+	uint16_t hatar=600;
 
-	int max=0, min=ertekek[0];
-
-	for(int j=0; j<32; j++)
+	for(int i=0; i<32; i++)
 	{
-		if(ertekek[j] > max) max=ertekek[j];
-		if(ertekek[j] < min) min=ertekek[j];
+		meresek[i]=ertekek[i];
 	}
-	min=min+((max-min)/4);
-	for(int j=0; j<32; j++)
-		{
-			if(ertekek[j]<min) ertekek[j]=0;
-		}
 
-	for(int i=0, j=1 ; i<32 ; i++, j++ )
+//	int max=0, min=meresek[0];
+//
+//	for(int j=0; j<32; j++)
+//	{
+//		if(meresek[j] > max) max=meresek[j];
+//		if(meresek[j] < min) min=meresek[j];
+//	}
+//	min=min+((max-min)/4);
+//	for(int j=0; j<32; j++)
+//		{
+//			if(meresek[j]<min) meresek[j]=0;
+//	}
+
+	for(int i=0, j=1 ; j<32 ; i++, j++ )
 		{
-			if(j<32)
-			{
-				if(  ertekek[i] == 0 && ertekek[j] > 0 )
+				if(  (meresek[i] < hatar) && (meresek[j] > hatar) )
 				{
 					countfel++;
 				}
-				if( ertekek[j] == 0 && ertekek[i] > 0 )
+				if( (meresek[j] > hatar) && (meresek[i] < hatar) )
 				{
 					countle++;
 				}
-			}
 		}
+
 		if (countfel < countle)
 		{
 			countfel=countle;
@@ -816,14 +821,18 @@ uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t szam)
 
 	yhszum=0;
 	hszum=0;
-	uint32_t sum=0;
+	static float sum=0;
+	static uint8_t init = 0;
 
-	for(int i=0; i<32; i++)
-	{
-		sum = sum + ertekek[i];
+	if(init == 0) {
+		for(int i=0; i<32; i++)
+		{
+			sum = sum + ertekek[i];
+		}
+
+		sum=sum/32.0f;
+		init = 1;
 	}
-
-	sum=sum/32;
 
 	for(int i=0; i<32; i++)
 	{
