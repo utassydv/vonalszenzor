@@ -78,8 +78,8 @@ uint16_t pos;
 
 float yhszum=0;
 float hszum=0;
-uint32_t tav=0;
-uint32_t regitav=0;
+uint32_t tav= 12799;		//kozep
+uint32_t regitav= 12799;	//kozep
 
 uint8_t counter=0;
 uint8_t szinkr=0;
@@ -156,7 +156,8 @@ void measureADC(uint8_t index);
 void Delay_us(uint16_t us);
 void BvjLED(uint16_t* measures);
 
-uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t* szam);
+uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t szam);
+uint16_t vonalszam_calc (uint16_t* ertekek);
 
 /* USER CODE END PV */
 
@@ -261,7 +262,6 @@ HAL_Delay(10);
 
 	if (szinkr)
 	{
-		ADC_ChannelConfTypeDef sConfig;
 		for(i=0; i<8; i++)
 		{
 			setLEDs(i);
@@ -271,9 +271,11 @@ HAL_Delay(10);
 				measureADC(i*2+j);
 			}
 		}
+		//vonalszam szamolas
+		count = vonalszam_calc(adcMeasures);
 
 		//VonalpozŪciů szŠmolŠs
-		tav=vonaltav_calc (adcMeasures,&count);
+		tav=vonaltav_calc (adcMeasures, count);
 
 		//tav alapjan visszajelzes (0-26425.6) 26425.6/32=8.258
 		displayLinePos(tav);
@@ -305,17 +307,10 @@ HAL_Delay(10);
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
 */
 
-//VonalpozŪciů szŠmolŠs
-
-	tav=vonaltav_calc (adcMeasures,&count);
-
-//tav alapjan visszajelzes (0-26425.6) 26425.6/32=8.258
-	displayLinePos(tav);
-
 
 
 //Kuldendo adatcsomag letrehozasa
-	snprintf(TxData, 16, "%lu,%lu\n", count, tav); //"2,150000'\0'"
+	/*snprintf(TxData, 16, "%lu,%lu\n", count, tav); //"2,150000'\0'"
 
 
 //KULDES
@@ -324,7 +319,7 @@ HAL_Delay(10);
 		kuldcpl=0;
 		HAL_UART_Transmit_IT(&huart5, (uint8_t *)TxData, strlen(TxData)); //melyik, mit, mennyi, mennyi ido
 		datacpl=0;
-	}
+	}*/
 
  }
 
@@ -679,11 +674,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(htim);
-  /* NOTE : This function Should not be modified, when the callback is needed,
-            the __HAL_TIM_PeriodElapsedCallback could be implemented in the user file
-   */
   if(htim->Instance == TIM2)
   {
 	  counter++;
@@ -783,10 +773,13 @@ void BvjLED(uint16_t* measures) //Binaris visszajelzes:
 }
 */
 
-
-uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t* szam)
+//vonalszam kalkulacio
+uint16_t vonalszam_calc (uint16_t* ertekek)
 {
-	int max=0, min=ertekek[0], elozo;
+	uint8_t countfel=0;
+	uint8_t countle=0;
+
+	int max=0, min=ertekek[0];
 
 	for(int j=0; j<32; j++)
 	{
@@ -799,56 +792,71 @@ uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t* szam)
 			if(ertekek[j]<min) ertekek[j]=0;
 		}
 
+	for(int i=0, j=1 ; i<32 ; i++, j++ )
+		{
+			if(j<32)
+			{
+				if(  ertekek[i] == 0 && ertekek[j] > 0 )
+				{
+					countfel++;
+				}
+				if( ertekek[j] == 0 && ertekek[i] > 0 )
+				{
+					countle++;
+				}
+			}
+		}
+		if (countfel < countle)
+		{
+			countfel=countle;
+		}
+		return countfel;
+}
+
+
+
+uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t szam)
+{
+
 	yhszum=0;
 	hszum=0;
-	*szam=0;
-	uint16_t sgn=0;
+	uint32_t sum=0;
 
-	bool fent=false;
-	uint8_t countfel=0;
-	uint8_t countle=0;
-
-	for(int i=0, j=1 ; i<32 ; i++, j++ )
+	for(int i=0; i<32; i++)
 	{
-		yhszum=yhszum+ertekek[i]*i*dist;
-		hszum=hszum+ertekek[i];
+		sum = sum + ertekek[i];
+	}
 
-		//vonalszŠm meghatŠrozŠs
-		if(j<32)
+	sum=sum/32;
+
+	for(int i=0; i<32; i++)
+	{
+		if(ertekek[i]<sum)
 		{
-			if(  ertekek[i] == 0 && ertekek[j] > 0 )
-			{
+			ertekek[i]=0;
+		}
+		else
+		{
+			ertekek[i]=ertekek[i]-sum;
+		}
+	}
 
-				countfel++;
-			}
-			if( ertekek[j] == 0 && ertekek[i] > 0 )
-			{
-				countle++;
-			}
-			}
-	}
-	if (countfel < countle)
-	{
-		countfel=countle;
-	}
-	*szam=countfel;
+	for(int i=0 ; i<32 ; i++)
+		{
+			yhszum=yhszum+ertekek[i]*i*dist;
+			hszum=hszum+ertekek[i];
+		}
 
 	if (szam==0)
 	{
-		return regitav;
+		tav= regitav;
+	}
+	else
+	{
+		tav= (yhszum/hszum)*100; //0-25599
+		regitav=tav;
 	}
 
-	tav= (yhszum/hszum)*100; //0-26425
-	if (szam!=0)
-	{
-	regitav=tav;
-	}
-/*
-	sgn=1150+(700/255.98)*tav;
-	sgn=(sgn-1500)*1+1500;
-	if(sgn<1150) sgn=1150;
-	if(sgn>1850) sgn=1850;
-*/
 	return tav;
 }
 
