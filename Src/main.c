@@ -73,7 +73,7 @@ extern uint32_t myTicks;
 
 
 char TxData[16]; // "2,150000'\0'"
-uint8_t count;    //vonal db szŠm
+uint8_t count;    //vonal db szĹ m
 uint16_t pos;
 
 float yhszum=0;
@@ -83,7 +83,7 @@ uint32_t regitav= 12799;	//kozep
 
 uint8_t counter=0;
 uint8_t szinkr=0;
-uint8_t kuldcpl=0;
+uint8_t kuldcpl=1;
 uint8_t datacpl=0;
 const float dist=8.258;
 
@@ -127,7 +127,7 @@ uint16_t measureLUT[32] = {  0,  8, 16, 24,
 							7, 15, 23, 31
 							};
 
-//MUX vezťrlťsťre
+//MUX vezĹĄrlĹĄsĹĄre
 uint8_t muxLUT[16] = { 	3, 0, // 1,  9, 17, 25
 						0, 2, // 2, 10, 18, 26
 						1, 3, // 3, 11, 19, 27
@@ -247,13 +247,13 @@ int main(void)
 
   HAL_TIM_Base_Start_IT(&htim2);
 
-//ALAPHELYZETBE ŃLLÕTŃS
-  //VISSZAJELZ’ LED
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET); //LE lehķz vj
+//ALAPHELYZETBE Ĺ�LLĂ•TĹ�S
+  //VISSZAJELZâ€™ LED
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET); //LE lehÄ·z vj
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_RESET);//oe
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);//oe
   //SZENZOR LED
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET); //LE lehķz sz
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET); //LE lehÄ·z sz
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_RESET); //OE
 HAL_Delay(10);
 
@@ -271,10 +271,11 @@ HAL_Delay(10);
 				measureADC(i*2+j);
 			}
 		}
+		adcMeasures[0] = 0;
 		//vonalszam szamolas
 		count = vonalszam_calc(adcMeasures);
 
-		//VonalpozŪciů szŠmolŠs
+		//VonalpozĹŞciĹŻ szĹ molĹ s
 		tav=vonaltav_calc (adcMeasures, count);
 
 		//tav alapjan visszajelzes (0-26425.6) 26425.6/32=8.258
@@ -300,7 +301,7 @@ HAL_Delay(10);
 
 	//teszt.word=0b00000000000000000000000000000000;
 
-	//Adatk�?ldťs
+	//Adatkďż˝?ldĹĄs
 	HAL_SPI_Transmit(&hspi2, vjLED.rawdata, 4, HAL_MAX_DELAY);
 	//LE (PB12 33-NSS) fel le
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
@@ -310,7 +311,7 @@ HAL_Delay(10);
 
 
 //Kuldendo adatcsomag letrehozasa
-	/*snprintf(TxData, 16, "%lu,%lu\n", count, tav); //"2,150000'\0'"
+	snprintf(TxData, 16, "%u,%lu\n", count, tav); //"2,150000'\0'"
 
 
 //KULDES
@@ -319,7 +320,7 @@ HAL_Delay(10);
 		kuldcpl=0;
 		HAL_UART_Transmit_IT(&huart5, (uint8_t *)TxData, strlen(TxData)); //melyik, mit, mennyi, mennyi ido
 		datacpl=0;
-	}*/
+	}
 
  }
 
@@ -690,11 +691,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 }
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(huart);
-  /* NOTE: This function Should not be modified, when the callback is needed,
-           the HAL_UART_TxCpltCallback could be implemented in the user file
-   */
   kuldcpl=1;
 }
 
@@ -765,7 +761,7 @@ void BvjLED(uint16_t* measures) //Binaris visszajelzes:
 
 		//teszt.word=0b00000000000000000000000000000000;
 
-		//Adatk�?ldťs
+		//Adatkďż˝?ldĹĄs
 		HAL_SPI_Transmit(&hspi2, vjLED.rawdata, 4, HAL_MAX_DELAY);
 		//LE (PB12 33-NSS) fel le
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);

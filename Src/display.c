@@ -27,20 +27,20 @@ void displayLinePos(uint32_t tav)
 	uint8_t ledpos;
 	vjLED.word=0;
 
+	/*
 	for(uint8_t i=1; i<32; i++)
 		{
 
-			if(tav<dist*i)
+			if(tav<dist*i*100.0f)
 			{
 				ledpos=i;
+				break;
 			}
-		}
+		}*/
 
-	vjLED.word =vjLED.word|1;
-	vjLED.word = vjLED.word << ledpos;
+	ledpos = 31-(uint32_t)(tav / (dist*100.0f));
 
-	vjLED.word =vjLED.word|1;
-	vjLED.word = vjLED.word << (ledpos-1);
+	vjLED.word = 3 << ledpos;
 
 
 	//Adatkldťs
