@@ -8,6 +8,6 @@
 #ifndef DISPLAY_H_
 #define DISPLAY_H_
 
-void displayLinePos(uint16_t pos);
+void displayLinePos(uint32_t tav);
 
 #endif /* DISPLAY_H_ */

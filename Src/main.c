@@ -44,6 +44,9 @@
 //#include "stdio.h"
 //#include "stdlib.h"
 #include <stdbool.h>
+#include <string.h>
+#include "display.h"
+
 
 
 /* USER CODE END Includes */
@@ -67,13 +70,7 @@ uint8_t i,j,k;
 
 extern uint32_t myTicks;
 
-typedef union{
-	uint8_t rawdata[4];
-	uint32_t word;
-} spiDataUnion_t;
 
-spiDataUnion_t vjLED;
-spiDataUnion_t teszt;
 
 char TxData[16]; // "2,150000'\0'"
 uint8_t count;    //vonal db szŠm
@@ -86,7 +83,9 @@ uint32_t regitav=0;
 
 uint8_t counter=0;
 uint8_t szinkr=0;
-uint8_t kuldcpl;
+uint8_t kuldcpl=0;
+uint8_t datacpl=0;
+const float dist=8.258;
 
 
 uint32_t channelLUT[16][2] = {
@@ -273,12 +272,20 @@ HAL_Delay(10);
 			}
 		}
 
+		//VonalpozŪciů szŠmolŠs
+		tav=vonaltav_calc (adcMeasures,&count);
+
+		//tav alapjan visszajelzes (0-26425.6) 26425.6/32=8.258
+		displayLinePos(tav);
+
 		szinkr=0;
+		datacpl=1;
 	}
 
 	//void BvjLED(adcMeasures);
-
+/*
 //Binaris visszajelzes:
+	//void BvjLED(adcMeasures);
 	vjLED.word=0;
 	for(uint8_t v=0; v<32; v++)
 	{
@@ -296,21 +303,27 @@ HAL_Delay(10);
 	//LE (PB12 33-NSS) fel le
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
-
+*/
 
 //VonalpozŪciů szŠmolŠs
 
 	tav=vonaltav_calc (adcMeasures,&count);
 
+//tav alapjan visszajelzes (0-26425.6) 26425.6/32=8.258
+	displayLinePos(tav);
+
+
+
 //Kuldendo adatcsomag letrehozasa
-	snprintf(TxData, 16, "%d,%d\n", count, tav); //"2,150000'\0'"
+	snprintf(TxData, 16, "%lu,%lu\n", count, tav); //"2,150000'\0'"
 
 
 //KULDES
-	if (szinkr && kuldcpl)
+	if (datacpl && kuldcpl)
 	{
 		kuldcpl=0;
 		HAL_UART_Transmit_IT(&huart5, (uint8_t *)TxData, strlen(TxData)); //melyik, mit, mennyi, mennyi ido
+		datacpl=0;
 	}
 
  }
@@ -675,11 +688,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   {
 	  counter++;
 
-	  //adc mérés
+	  //10ms-os idozites
 	  if(counter==10)
 	  {
 		  szinkr=1;
-		  mehet=1;
 		  counter=0;
 	  }
 
@@ -748,6 +760,7 @@ void Delay_us(uint16_t us)
 	while(myTicks < vege);
 }
 
+/*
 void BvjLED(uint16_t* measures) //Binaris visszajelzes:
 {
 		vjLED.word=0;
@@ -768,6 +781,7 @@ void BvjLED(uint16_t* measures) //Binaris visszajelzes:
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
 }
+*/
 
 
 uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t* szam)
@@ -789,7 +803,7 @@ uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t* szam)
 	hszum=0;
 	*szam=0;
 	uint16_t sgn=0;
-	float dist=8.258;
+
 	bool fent=false;
 	uint8_t countfel=0;
 	uint8_t countle=0;
@@ -824,7 +838,7 @@ uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t* szam)
 		return regitav;
 	}
 
-	tav= (yhszum/hszum)*100;
+	tav= (yhszum/hszum)*100; //0-26425
 	if (szam!=0)
 	{
 	regitav=tav;
@@ -837,6 +851,9 @@ uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t* szam)
 */
 	return tav;
 }
+
+
+
 
 /* USER CODE END 4 */
 
