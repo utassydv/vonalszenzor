@@ -301,7 +301,7 @@ HAL_Delay(10);
 
 	//teszt.word=0b00000000000000000000000000000000;
 
-	//Adatkďż˝?ldĹĄs
+	//Adatk�?ż�??ldĹĄs
 	HAL_SPI_Transmit(&hspi2, vjLED.rawdata, 4, HAL_MAX_DELAY);
 	//LE (PB12 33-NSS) fel le
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
@@ -311,14 +311,14 @@ HAL_Delay(10);
 
 
 //Kuldendo adatcsomag letrehozasa
-	snprintf(TxData, 16, "%u,%lu?", count, tav); //"2,150000'\0'"
+	snprintf(TxData, 16, "%u,%lu\0", count, tav); //"2,150000'\0'"
 
 
 //KULDES
 	if (datacpl && kuldcpl)
 	{
 		kuldcpl=0;
-		HAL_UART_Transmit_IT(&huart5, (uint8_t *)TxData, strlen(TxData)); //melyik, mit, mennyi, mennyi ido
+		HAL_UART_Transmit_IT(&huart5, (uint8_t *)TxData, (strlen(TxData)+1)); //melyik, mit, mennyi, mennyi ido
 		datacpl=0;
 	}
 
@@ -761,7 +761,7 @@ void BvjLED(uint16_t* measures) //Binaris visszajelzes:
 
 		//teszt.word=0b00000000000000000000000000000000;
 
-		//Adatkďż˝?ldĹĄs
+		//Adatk�?ż�??ldĹĄs
 		HAL_SPI_Transmit(&hspi2, vjLED.rawdata, 4, HAL_MAX_DELAY);
 		//LE (PB12 33-NSS) fel le
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
