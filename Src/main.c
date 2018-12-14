@@ -47,8 +47,6 @@
 #include <string.h>
 #include "display.h"
 
-
-
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -67,15 +65,10 @@ UART_HandleTypeDef huart5;
 /* Private variables ---------------------------------------------------------*/
 
 uint8_t i,j,k;
-
 extern uint32_t myTicks;
-
-
-
 char TxData[16]; // "2,150000'\0'"
 uint8_t count;    //vonal db szĹ m
 uint16_t pos;
-
 float yhszum=0;
 float hszum=0;
 uint32_t tav= 12799;		//kozep
@@ -86,7 +79,6 @@ uint8_t szinkr=0;
 uint8_t kuldcpl=1;
 uint8_t datacpl=0;
 const float dist=8.258;
-
 
 uint32_t channelLUT[16][2] = {
 	{ADC_CHANNEL_0,	 ADC_CHANNEL_2},
@@ -117,6 +109,7 @@ uint16_t iLEDLUT[8] = 	{
 							0b0100000001000000,
 							0b1000000010000000,
 						};
+
 uint16_t measureLUT[32] = {  0,  8, 16, 24,
 							1,  9, 17, 25,
 							2, 10, 18, 26,
@@ -137,27 +130,9 @@ uint8_t muxLUT[16] = { 	3, 0, // 1,  9, 17, 25
 						3, 1, // 7, 15, 23, 31
 						1, 2 // 8, 16, 24, 32
 						};
-//uint8_t muxLUT[32] = { 	3, 3, 0, 0, // 1,  9, 17, 25
-//						0, 0, 2, 2, // 2, 10, 18, 26
-//						1, 1, 3, 3, // 3, 11, 19, 27
-//						2, 2, 1, 1, // 4, 12, 20, 28
-//						0, 0, 3, 3, // 5, 13, 21, 29
-//						2, 2, 0, 0, // 6, 14, 22, 30
-//						3, 3, 1, 1, // 7, 15, 23, 31
-//						1, 1, 2, 2 // 8, 16, 24, 32
-//						};
 
 uint16_t adcMeasures[32];
 uint16_t measureIndex;
-
-
-void setLEDs(uint8_t index);
-void measureADC(uint8_t index);
-void Delay_us(uint16_t us);
-void BvjLED(uint16_t* measures);
-
-uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t szam);
-uint16_t vonalszam_calc (uint16_t* ertekek);
 
 /* USER CODE END PV */
 
@@ -178,32 +153,14 @@ static void MX_TIM2_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-void setMux(uint8_t index)
-{
-	uint8_t muxIndex = muxLUT[index];
-	switch(muxIndex){
-	case 0:
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-		break;
-	case 1:
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-		break;
-	case 2:
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-		break;
-	case 3:
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-		break;
-	default:
-		break;
-	}
-	//HAL_Delay(1);
-}
 
+void setLEDs(uint8_t index);
+void measureADC(uint8_t index);
+void Delay_us(uint16_t us);
+void BvjLED(uint16_t* measures);
+void setMux(uint8_t index);
+uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t szam);
+uint16_t vonalszam_calc (uint16_t* ertekek);
 
 /* USER CODE END 0 */
 
@@ -673,6 +630,31 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void setMux(uint8_t index)
+{
+	uint8_t muxIndex = muxLUT[index];
+	switch(muxIndex){
+	case 0:
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+		break;
+	case 1:
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+		break;
+	case 2:
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+		break;
+	case 3:
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+		break;
+	default:
+		break;
+	}
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if(htim->Instance == TIM2)
