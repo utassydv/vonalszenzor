@@ -156,6 +156,7 @@ static void MX_TIM2_Init(void);
 
 void setLEDs(uint8_t index);
 void measureADC(uint8_t index);
+void measure(void);
 void Delay_us(uint16_t us);
 void BvjLED(uint16_t* measures);
 void setMux(uint8_t index);
@@ -219,53 +220,17 @@ HAL_Delay(10);
 
 	if (szinkr)
 	{
-		for(i=0; i<8; i++)
-		{
-			setLEDs(i);
-			for(j = 0; j < 2; j++)
-			{
-				setMux(i*2+j);
-				measureADC(i*2+j);
-			}
-		}
-		adcMeasures[0] = 0;
-		//vonalszam szamolas
-		count = vonalszam_calc(adcMeasures);
+		measure();										//meres
+		adcMeasures[0] = 0;								//rossz erteket ad ez a szenzor
 
-		//VonalpozĹŞciĹŻ szĹ molĹ s
-		tav=vonaltav_calc (adcMeasures, count);
+		count 	= vonalszam_calc (adcMeasures);			//vonalszam meghatarozas
+		tav		= vonaltav_calc (adcMeasures, count);	//vonalpozicio meghatarozas
 
-		//tav alapjan visszajelzes (0-26425.6) 26425.6/32=8.258
-		displayLinePos(tav);
+		displayLinePos(tav);							//tav alapjan visszajelzes (0-26425.6) 26425.6/32=8.258
 
-		szinkr=0;
-		datacpl=1;
+		szinkr = 0;										//meres utemezeshez
+		datacpl = 1;									//kuldes kesz visszajelzes
 	}
-
-	//void BvjLED(adcMeasures);
-/*
-//Binaris visszajelzes:
-	//void BvjLED(adcMeasures);
-	vjLED.word=0;
-	for(uint8_t v=0; v<32; v++)
-	{
-		if(adcMeasures[v] > 800)
-		{
-			vjLED.word =vjLED.word|1;
-		}
-		if(v<31) vjLED.word = vjLED.word << 1;
-	}
-
-	//teszt.word=0b00000000000000000000000000000000;
-
-	//Adatk�?ż�??ldĹĄs
-	HAL_SPI_Transmit(&hspi2, vjLED.rawdata, 4, HAL_MAX_DELAY);
-	//LE (PB12 33-NSS) fel le
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
-*/
-
-
 
 //Kuldendo adatcsomag letrehozasa
 	snprintf(TxData, 16, "%u,%lu\0", count, tav); //"2,150000'\0'"
@@ -715,6 +680,19 @@ void measureADC(uint8_t index)
 	adcMeasures[measureLUT[2*index]] = (uint16_t)adcData[0];
 	adcMeasures[measureLUT[2*index+1]] = (uint16_t)adcData[1];
 	HAL_ADC_Stop_DMA(&hadc1);
+}
+
+void measure(void)
+{
+	for(i=0; i<8; i++)
+	{
+		setLEDs(i);
+		for(j = 0; j < 2; j++)
+		{
+			setMux(i*2+j);
+			measureADC(i*2+j);
+		}
+	}
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)

@@ -20,23 +20,12 @@ extern SPI_HandleTypeDef hspi2;
 spiDataUnion_t vjLED;
 spiDataUnion_t teszt;
 
-void displayLinePos(uint32_t tav)
+void displayLinePos(uint32_t tav)									//tav alapjan visszajelzes (0-26425.6) 26425.6/32=8.258
 {
-	//tav alapjan visszajelzes (0-26425.6) 26425.6/32=8.258
+
 
 	uint8_t ledpos;
 	vjLED.word=0;
-
-	/*
-	for(uint8_t i=1; i<32; i++)
-		{
-
-			if(tav<dist*i*100.0f)
-			{
-				ledpos=i;
-				break;
-			}
-		}*/
 
 	ledpos = 30-(uint32_t)(tav / (dist*100.0f));
 
@@ -50,3 +39,25 @@ void displayLinePos(uint32_t tav)
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
 
 }
+
+/*
+//Binaris visszajelzes:
+	//void BvjLED(adcMeasures);
+	vjLED.word=0;
+	for(uint8_t v=0; v<32; v++)
+	{
+		if(adcMeasures[v] > 800)
+		{
+			vjLED.word =vjLED.word|1;
+		}
+		if(v<31) vjLED.word = vjLED.word << 1;
+	}
+
+	//teszt.word=0b00000000000000000000000000000000;
+
+	//Adatk�?ż�??ldĹĄs
+	HAL_SPI_Transmit(&hspi2, vjLED.rawdata, 4, HAL_MAX_DELAY);
+	//LE (PB12 33-NSS) fel le
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
+*/
