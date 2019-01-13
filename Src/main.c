@@ -162,6 +162,7 @@ void BvjLED(uint16_t* measures);
 void setMux(uint8_t index);
 uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t szam);
 uint16_t vonalszam_calc (uint16_t* ertekek);
+void vonalszenzordebug(void);
 
 /* USER CODE END 0 */
 
@@ -241,6 +242,7 @@ HAL_Delay(10);
 	{
 		kuldcpl=0;
 		HAL_UART_Transmit_IT(&huart5, (uint8_t *)TxData, (strlen(TxData)+1)); //melyik, mit, mennyi, mennyi ido
+		//vonalszenzordebug();
 		datacpl=0;
 	}
 
@@ -835,6 +837,37 @@ uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t szam)
 	}
 
 	return tav;
+}
+
+void vonalszenzordebug(void)
+{
+	uint8_t debugdata[32];
+
+	for(int i=0; i<32; i++)
+	{
+		if (adcMeasures[i] > 2500)
+		{
+			debugdata[i] = 250;
+		}
+		else
+		{
+			debugdata[i] = adcMeasures[i]/10;
+		}
+	}
+
+
+	char TxDatak[200];
+	snprintf(TxDatak,200,"%u,",debugdata[0] );
+
+	for(int i=1; i<32; i++)
+	{
+		char TxBuf[5];
+		snprintf(TxBuf,5,"%u,", debugdata[i]);
+		strcat(TxDatak, TxBuf);
+	}
+	strcat(TxDatak, "\n");
+
+	HAL_UART_Transmit(&huart5, (uint8_t *)TxDatak, strlen(TxDatak)+1 , HAL_MAX_DELAY); //melyik, mit, mennyi, mennyi ido
 }
 
 
