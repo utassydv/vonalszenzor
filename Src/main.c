@@ -755,23 +755,35 @@ uint16_t vonalszam_calc (uint16_t* ertekek)
 //			if(meresek[j]<min) meresek[j]=0;
 //	}
 
-	for(int i=0, j=1 ; j<32 ; i++, j++ )
-		{
-				if(  (meresek[i] < hatar) && (meresek[j] > hatar) )
-				{
-					countfel++;
-				}
-				if( (meresek[j] > hatar) && (meresek[i] < hatar) )
-				{
-					countle++;
-				}
-		}
+	for(int i=0, j=1 ; j<32 ; i++, j++ )								//egyik kisebb-másik nagyobb mint "hatar"
+	{
+			if(  (meresek[i] < hatar) && (meresek[j] > hatar) )
+			{
+				countfel++;
+			}
+			if( (meresek[j] > hatar) && (meresek[i] < hatar) )
+			{
+				countle++;
+			}
+	}
 
-		if (countfel < countle)
-		{
-			countfel=countle;
-		}
-		return countfel;
+//	for(int i=0, j=1 ; j<32 ; i++, j++ )								//"hatar" különbség van a kettő között
+//	{
+//			if( (meresek[i] +  hatar) < meresek[j] )
+//			{
+//				countfel++;
+//			}
+//			if( (meresek[i] -  hatar) > meresek[j] )
+//			{
+//				countle++;
+//			}
+//	}
+
+	if (countfel < countle)
+	{
+		countfel=countle;
+	}
+	return countfel;
 }
 
 
@@ -784,7 +796,7 @@ uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t szam)
 	static float sum=0;
 	static uint8_t init = 0;
 
-	if(init == 0) {
+	if(init == 0) {						//csak az elejen szamol atlagot
 		for(int i=0; i<32; i++)
 		{
 			sum = sum + ertekek[i];
@@ -794,7 +806,7 @@ uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t szam)
 		init = 1;
 	}
 
-	for(int i=0; i<32; i++)
+	for(int i=0; i<32; i++)				//atlagnal kisebbet nullaz, nagyobból kivonja az atlagot
 	{
 		if(ertekek[i]<sum)
 		{
