@@ -72,6 +72,7 @@ uint16_t pos;
 float yhszum=0;
 float hszum=0;
 uint32_t tav= 12799;		//kozep
+uint32_t tav2 = 12799;
 uint32_t regitav= 12799;	//kozep
 
 uint8_t counter=0;
@@ -79,6 +80,9 @@ uint8_t szinkr=0;
 uint8_t kuldcpl=1;
 uint8_t datacpl=0;
 const float dist=8.258;
+
+uint8_t felfuto;
+uint8_t lefuto;
 
 uint32_t channelLUT[16][2] = {
 	{ADC_CHANNEL_0,	 ADC_CHANNEL_2},
@@ -99,7 +103,7 @@ uint32_t channelLUT[16][2] = {
 	{ADC_CHANNEL_10, ADC_CHANNEL_12}
 };
 
-uint16_t iLEDLUT[8] = 	{
+uint16_t iLEDLUT[9] = 	{
 							0b0000000100000001,
 							0b0000001000000010,
 							0b0000010000000100,
@@ -108,6 +112,7 @@ uint16_t iLEDLUT[8] = 	{
 							0b0010000000100000,
 							0b0100000001000000,
 							0b1000000010000000,
+							0b0000000000000000
 						};
 
 uint16_t measureLUT[32] = {  0,  8, 16, 24,
@@ -158,7 +163,6 @@ void setLEDs(uint8_t index);
 void measureADC(uint8_t index);
 void measure(void);
 void Delay_us(uint16_t us);
-void BvjLED(uint16_t* measures);
 void setMux(uint8_t index);
 uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t szam);
 uint16_t vonalszam_calc (uint16_t* ertekek);
@@ -222,7 +226,8 @@ HAL_Delay(10);
 	if (szinkr)
 	{
 		measure();										//meres
-		adcMeasures[0] = 0;								//rossz erteket ad ez a szenzor
+//		adcMeasures[0] = 0;								//rossz erteket ad ez a szenzor
+//		adcMeasures[1] = 0;
 
 		count 	= vonalszam_calc (adcMeasures);			//vonalszam meghatarozas
 		tav		= vonaltav_calc (adcMeasures, count);	//vonalpozicio meghatarozas
@@ -234,7 +239,7 @@ HAL_Delay(10);
 	}
 
 //Kuldendo adatcsomag letrehozasa
-	snprintf(TxData, 16, "%u,%lu\0", count, tav); //"2,150000'\0'"
+	snprintf(TxData, 16, "%u,%lu,%lu\0", count, tav, tav2); //"2,150000'\0'"
 
 
 //KULDES
@@ -629,7 +634,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  counter++;
 
 	  //10ms-os idozites
-	  if(counter==10)
+	  if(counter==5)
 	  {
 		  szinkr=1;
 		  counter=0;
@@ -695,6 +700,7 @@ void measure(void)
 			measureADC(i*2+j);
 		}
 	}
+	setLEDs(9);
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
@@ -756,16 +762,22 @@ uint16_t vonalszam_calc (uint16_t* ertekek)
 //		{
 //			if(meresek[j]<min) meresek[j]=0;
 //	}
-
+	uint8_t flagle = 0;
 	for(int i=0, j=1 ; j<32 ; i++, j++ )								//egyik kisebb-másik nagyobb mint "hatar"
 	{
 			if(  (meresek[i] < hatar) && (meresek[j] > hatar) )
 			{
 				countfel++;
+				felfuto = i;
 			}
 			if( (meresek[j] > hatar) && (meresek[i] < hatar) )
 			{
 				countle++;
+				if(flagle == 0)
+				{
+					lefuto = j;
+					flagle = 1;
+				}
 			}
 	}
 
@@ -820,21 +832,52 @@ uint16_t vonaltav_calc (uint16_t* ertekek, uint8_t szam)
 		}
 	}
 
-	for(int i=0 ; i<32 ; i++)
+	if( szam == 2 )
+	{
+		uint8_t kozep = (lefuto + felfuto) / 2;
+
+		//ELSO VONAL
+		for(int i=0 ; i< kozep ; i++)
+		{
+			yhszum=yhszum+ertekek[i]*i*dist;
+			hszum=hszum+ertekek[i];
+		}
+		tav= (yhszum/hszum)*100; //0-25599
+
+		//MASODIK VONAL
+		yhszum=0;
+		hszum=0;
+		for(int i=kozep ; i< 32 ; i++)
+		{
+			yhszum=yhszum+ertekek[i]*i*dist;
+			hszum=hszum+ertekek[i];
+		}
+		tav2= (yhszum/hszum)*100; //0-25599
+
+
+	}
+	else
+	{
+		for(int i=0 ; i<32 ; i++)
 		{
 			yhszum=yhszum+ertekek[i]*i*dist;
 			hszum=hszum+ertekek[i];
 		}
 
-	if (szam==0)
-	{
-		tav= regitav;
+		if (szam==0)
+		{
+			tav= regitav;
+			tav2 = 0;
+		}
+		else
+		{
+			tav= (yhszum/hszum)*100; //0-25599
+			tav2 = 0;
+			regitav=tav;
+		}
 	}
-	else
-	{
-		tav= (yhszum/hszum)*100; //0-25599
-		regitav=tav;
-	}
+
+
 
 	return tav;
 }
