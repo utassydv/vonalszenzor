@@ -84,6 +84,11 @@ const float dist=8.258;
 uint8_t felfuto;
 uint8_t lefuto;
 
+uint8_t countfel=0;
+uint8_t countle=0;
+
+
+
 uint32_t channelLUT[16][2] = {
 	{ADC_CHANNEL_0,	 ADC_CHANNEL_2},
 	{ADC_CHANNEL_11, ADC_CHANNEL_13},
@@ -740,8 +745,9 @@ void BvjLED(uint16_t* measures) //Binaris visszajelzes:
 //vonalszam kalkulacio
 uint16_t vonalszam_calc (uint16_t* ertekek)
 {
-	uint8_t countfel=0;
-	uint8_t countle=0;
+	countfel = 0;
+	countle = 0;
+
 	uint16_t meresek[32];
 	uint16_t hatar=600;
 
@@ -770,7 +776,7 @@ uint16_t vonalszam_calc (uint16_t* ertekek)
 				countfel++;
 				felfuto = i;
 			}
-			if( (meresek[j] > hatar) && (meresek[i] < hatar) )
+			if( (meresek[j] < hatar) && (meresek[i] > hatar) )
 			{
 				countle++;
 				if(flagle == 0)
